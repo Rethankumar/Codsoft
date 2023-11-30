@@ -1,0 +1,59 @@
+class SimpleRecommendationSystem:
+    def __init__(self):
+        self.user_preferences = {}
+
+    def add_preference(self, user, item, rating):
+        if user not in self.user_preferences:
+            self.user_preferences[user] = {}
+        self.user_preferences[user][item] = rating
+
+    def get_recommendations(self, user):
+        user_preferences = self.user_preferences.get(user, {})
+        if not user_preferences:
+            return "User not found or no preferences available."
+
+        recommendations = {}
+
+        for other_user, preferences in self.user_preferences.items():
+            if other_user != user:
+                similarity = self.calculate_similarity(user_preferences, preferences)
+                for item, rating in preferences.items():
+                    if item not in user_preferences and rating > 0:
+                        recommendations.setdefault(item, 0)
+                        recommendations[item] += rating * similarity
+
+        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
+
+        return sorted_recommendations[:5]  # Return the top 5 recommendations
+
+    def calculate_similarity(self, preferences1, preferences2):
+        common_items = set(preferences1.keys()) & set(preferences2.keys())
+
+        if not common_items:
+            return 0
+
+        numerator = sum(preferences1[item] * preferences2[item] for item in common_items)
+        denominator = (sum(value ** 2 for value in preferences1.values()) ** 0.5) * \
+                      (sum(value ** 2 for value in preferences2.values()) ** 0.5)
+
+        return numerator / denominator if denominator != 0 else 0
+
+
+# Example usage
+recommendation_system = SimpleRecommendationSystem()
+
+# Adding user preferences
+recommendation_system.add_preference('User1', 'Movie1', 5)
+recommendation_system.add_preference('User1', 'Movie2', 4)
+recommendation_system.add_preference('User2', 'Movie1', 3)
+recommendation_system.add_preference('User2', 'Movie3', 5)
+recommendation_system.add_preference('User3', 'Movie2', 2)
+recommendation_system.add_preference('User3', 'Movie3', 4)
+
+# Getting recommendations for a user
+user_to_recommend = 'User1'
+recommendations = recommendation_system.get_recommendations(user_to_recommend)
+
+print(f"Top 5 Recommendations for {user_to_recommend}:")
+for item, score in recommendations:
+    print(f"{item}: {score}")
